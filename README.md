@@ -52,10 +52,13 @@
 
    ![GitHub Pages 設定畫面，Source 選 GitHub Actions，底下顯示已透過 Deploy to GitHub Pages workflow 部署完成](docs/copy-guide-images/04-pages-settings.jpg)
 
-3. 這個設定一存檔，Actions 通常已經在背景自動跑過一次了（複製 repo 那個當下的 commit 就會觸發）。到上方 **Actions** 分頁可以看到「Deploy to GitHub Pages」的執行紀錄，綠色勾勾代表成功；第一次執行大約需要 1～2 分鐘（要安裝套件+建置）。
-4. 成功後回到 Settings → Pages，會顯示「Your site is live at ...」，網址格式是 `https://你的帳號.github.io/你的repo名稱/`（例如 `https://tnjbox.github.io/Blockly-Start/`），點進去確認能正常打開。
+3. 到上方 **Actions** 分頁，會看到一個叫「Deploy to GitHub Pages」的執行紀錄——**這一次幾乎一定會顯示紅色 ✕（失敗），這是正常現象，不是哪裡做錯了**：複製 repo 的那個當下就已經自動觸發這次執行，比你剛剛去 Settings 把 Source 切成「GitHub Actions」還要早，所以 Pages 那時候還沒真正啟用，這一次注定會失敗。
 
-   > **如果 Actions 分頁顯示執行失敗（紅色 X）**：點進去看錯誤訊息，最常見是 npm 套件安裝逾時，重新整理頁面按右上角 **Re-run all jobs** 通常就會過。如果不確定怎麼排查，可以直接聯絡 Younger Dream Workshop 協助。
+4. 點進那個失敗的執行紀錄，右上角按 **Re-run failed jobs**（重跑失敗的工作）。這次 Pages 已經啟用好了，會直接成功，大約 1～2 分鐘。
+
+5. 成功後回到 Settings → Pages，會顯示「Your site is live at ...」，網址格式是 `https://你的帳號.github.io/你的repo名稱/`（例如 `https://tnjbox.github.io/Blockly-Start/`），點進去確認能正常打開。
+
+   > **之後每次你自己改程式碼、或用「課程管理」頁面匯入新課程，都不會再遇到這個問題**——只有複製範本後的第一次會這樣，因為只有那一次會搶在你設定 Pages 之前就自動觸發。
 
 ### 步驟 3：（選用）建立 GitHub Token，供「課程管理」頁面使用
 
