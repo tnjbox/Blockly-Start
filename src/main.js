@@ -130,19 +130,7 @@ const blocklyDiv = document.getElementById('blocklyDiv');
 const codePreview = document.getElementById('codePreview');
 const outputArea = document.getElementById('outputArea');
 
-// 成績評分/上傳後端（Cloudflare Worker，blockly-lab獨立部署，跟BlocklyYdws的Worker分開），
-// 取代直接呼叫Google Apps Script Web App URL。前端不再持有任何能寫入Sheet的密鑰；正確答案
-// (expectedOutput)對contest模式課程也不會打包進這裡的課程JS，Worker那邊才有完整評分資料。
-// 詳見 workers/score-grader/README.md。部署後請把這裡換成 wrangler deploy 印出的實際網址。
-const SCORE_GRADER_WORKER_URL = 'https://blockly-lab-score-grader.tnjboxing.workers.dev';
 const STUDENT_PROFILE_STORAGE_KEY = 'blocklyLabStudentProfileV1';
-
-// 2026-08-13使用者決定：blockly-lab要公開分享給外校老師使用，成績上傳（送進本帳號的
-// Google Sheet）對外校學生沒有意義，且blockly-lab跟BlocklyYdws的score-grader Worker
-// 是同一個Cloudflare帳號、免費額度共用，全平台停用這個功能以避免外部流量吃掉額度。
-// 按鈕維持原本顯示/啟用邏輯（updateSubmitScoreVisibility()完全沒動），只有按下去
-// 真正送出這一步被擋掉，不分課程模式。要恢復功能只要把這個常數改回true。
-const SCORE_SUBMISSION_ENABLED = false;
 
 const btnConnectSmartRing = document.getElementById('btnConnectSmartRing');
 const btnDisconnectSmartRing = document.getElementById('btnDisconnectSmartRing');
@@ -172,7 +160,6 @@ const taskSelector = document.getElementById('taskSelector');
 const btnLoadCourse = document.getElementById('btnLoadCourse');
 const btnOpenCourseManager = document.getElementById('btnOpenCourseManager');
 const btnTestTask = document.getElementById('btnTestTask');
-const btnSubmitScore = document.getElementById('btnSubmitScore');
 
 const taskInfo = document.getElementById('taskInfo');
 const sidePanel = document.querySelector('.side-panel');
@@ -254,43 +241,6 @@ function isProgrammingProblemTask(task = currentTask, courseGroup = currentCours
   );
 }
 
-function updateSubmitScoreVisibility() {
-  if (!btnSubmitScore) return;
-
-  const profileStatus = getStudentProfileCompleteness();
-  const isProgrammingCourse = Boolean(
-    currentCourseGroup &&
-      currentTask &&
-      isProgrammingProblemTask(currentTask, currentCourseGroup)
-  );
-  const hasValidAssessmentResult = Boolean(
-    hasProgrammingAssessmentResult &&
-      lastAssessmentResult &&
-      lastAssessmentResult.total > 0
-  );
-  const shouldEnable = Boolean(
-    isProgrammingCourse &&
-      hasValidAssessmentResult &&
-      !hasLoadedStarterForCurrentTask &&
-      !isUserProgramRunning
-  );
-
-  btnSubmitScore.hidden = false;
-  btnSubmitScore.disabled = !shouldEnable;
-
-  if (!currentTask || !isProgrammingProblemTask(currentTask, currentCourseGroup)) {
-    btnSubmitScore.title = '請先載入程式解題課程並完成系統評分。';
-  } else if (!hasProgrammingAssessmentResult || !hasValidAssessmentResult) {
-    btnSubmitScore.title = '請先完成系統評分。';
-  } else if (hasLoadedStarterForCurrentTask) {
-    btnSubmitScore.title = '本題已載入範例積木，不能上傳成績。請清除工作區後自行重新建置積木，再完成系統評分。';
-  } else if (!profileStatus.ok) {
-    btnSubmitScore.title = `已完成系統評分；按下後會提示補填：${profileStatus.missingFields.join('、')}`;
-  } else {
-    btnSubmitScore.title = '上傳本次系統評分結果。';
-  }
-}
-
 function updateTaskActionButtons() {
   if (btnTestTask) {
     const canUseSystemAssessment = Boolean(
@@ -318,49 +268,11 @@ function updateTaskActionButtons() {
       ? '載入目前題目的範例積木，會覆蓋工作區。'
       : '請先載入有範例積木的課程任務。';
   }
-
-  updateSubmitScoreVisibility();
 }
 
 function resetCompetitionAssessmentResult() {
   hasProgrammingAssessmentResult = false;
   lastAssessmentResult = null;
-  updateSubmitScoreVisibility();
-}
-
-function getRequiredStudentFields() {
-  return [
-    { key: 'className', label: '班級', element: studentClass },
-    { key: 'seatNumber', label: '座號', element: studentNumber },
-    { key: 'name', label: '姓名', element: studentName },
-  ];
-}
-
-function getStudentProfileCompleteness(profile = getStudentProfile()) {
-  const missingFields = getRequiredStudentFields()
-    .filter((field) => !String(profile[field.key] || '').trim())
-    .map((field) => field.label);
-
-  return {
-    ok: missingFields.length === 0,
-    missingFields,
-  };
-}
-
-function markStudentProfileFields(missingFields = []) {
-  getRequiredStudentFields().forEach((field) => {
-    const wrapper = field.element?.closest('.field-group');
-    const isMissing = missingFields.includes(field.label);
-    wrapper?.classList.toggle('field-required-missing', isMissing);
-    field.element?.setAttribute('aria-invalid', isMissing ? 'true' : 'false');
-  });
-}
-
-function getStudentKey(profile = getStudentProfile()) {
-  return [profile.className, profile.seatNumber, profile.name]
-    .map((part) => String(part || '').trim())
-    .filter(Boolean)
-    .join('-');
 }
 
 function saveStudentProfileToStorage() {
@@ -405,15 +317,11 @@ function clearStudentProfile() {
     console.warn('[Blockly Lab] 無法清除 localStorage 中的學生資料。', error);
   }
 
-  markStudentProfileFields([]);
-  updateSubmitScoreVisibility();
   outputArea.textContent = '已清除學生資料。';
 }
 
 function handleStudentProfileInput() {
   saveStudentProfileToStorage();
-  markStudentProfileFields([]);
-  updateSubmitScoreVisibility();
 }
 
 function initBlockly() {
@@ -1599,7 +1507,7 @@ function loadCourse() {
   const code = profile.courseCode;
 
   if (!code) {
-    outputArea.textContent = '請先輸入課程組代碼，例如 SRB00、SRA00、SRF00、SRC00、JSB00、JSA00、CPB00。';
+    outputArea.textContent = '請先輸入課程組代碼，例如 SRB00、SRA00、SRF00、SRC00、JSB00、JSA00。';
     courseCode.focus();
     return;
   }
@@ -1796,21 +1704,11 @@ function renderAssessmentResultHtml(assessment) {
   const total = Number(assessment?.total || 0);
   const requiresGreenFlag = Boolean(assessment?.requiresGreenFlag);
   const actualOutputLabel = requiresGreenFlag ? '實際說出內容' : '實際輸出';
-  const isContestMode = normalizeCourseMode(assessment?.mode || currentCourseMode) === 'contest';
 
   const rows = (assessment?.cases || [])
     .map((item, index) => {
       const caseStatusClass = item.passed ? 'passed' : 'failed';
       const caseStatusText = item.passed ? '通過' : '未通過';
-
-      if (isContestMode) {
-        return `
-          <tr class="assessment-row ${caseStatusClass}">
-            <td class="assessment-case-number">${index + 1}</td>
-            <td><span class="assessment-badge ${caseStatusClass}">${caseStatusText}</span></td>
-          </tr>
-        `;
-      }
 
       const errorCell = item.errorMessage
         ? `<div class="assessment-error">${escapeHtml(item.errorMessage)}</div>`
@@ -1828,14 +1726,7 @@ function renderAssessmentResultHtml(assessment) {
     })
     .join('');
 
-  const tableHeaderHtml = isContestMode
-    ? `
-            <tr>
-              <th>案例</th>
-              <th>結果</th>
-            </tr>
-    `
-    : `
+  const tableHeaderHtml = `
             <tr>
               <th>案例</th>
               <th>結果</th>
@@ -1845,17 +1736,12 @@ function renderAssessmentResultHtml(assessment) {
             </tr>
     `;
 
-  const contestNote = isContestMode
-    ? '<p class="assessment-note">競賽模式僅顯示每筆測資是否通過，不顯示輸入、預期輸出與實際輸出。</p>'
-    : '';
-
-  const greenFlagNote = requiresGreenFlag && !isContestMode
+  const greenFlagNote = requiresGreenFlag
     ? '<p class="assessment-note">這個課程比照官方競賽平台規範：系統評分只比對「說出」積木的內容，「輸出」積木只是顯示訊息，不會列入評分。</p>'
     : '';
 
   const tableHtml = total > 0
     ? `
-      ${contestNote}
       ${greenFlagNote}
       <div class="assessment-table-wrap">
         <table class="assessment-table">
@@ -1876,24 +1762,6 @@ function renderAssessmentResultHtml(assessment) {
 
 function showAssessmentResult(assessment) {
   outputArea.innerHTML = renderAssessmentResultHtml(assessment);
-}
-
-// 2026-08-09比照BlocklyYdws移植：contest模式課程的本機JS不含expectedOutput，
-// 正確答案只存在score-grader Worker那一側，必須送去給Worker比對。
-async function requestServerGrading(courseId, taskId, cases) {
-  const resp = await fetch(`${SCORE_GRADER_WORKER_URL}/grade`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ courseId, taskId, cases }),
-  });
-
-  const body = await resp.json().catch(() => ({}));
-
-  if (!resp.ok) {
-    throw new Error(body.error || `評分伺服器錯誤（狀態碼 ${resp.status}）`);
-  }
-
-  return body;
 }
 
 async function runProgrammingTestCases() {
@@ -1927,8 +1795,8 @@ async function runProgrammingTestCases() {
   clearOutput();
   writeOutput(`正在進行 ${currentTask.id}｜${currentTask.title} 的系統評分...`);
 
-  // 學生程式碼一律在瀏覽器本機執行（Blockly產生的JS本來就只能跑在瀏覽器裡）。
-  // 這裡只是先跑出每筆測資的實際輸出，比對正確答案的方式依課程模式而不同。
+  // 學生程式碼一律在瀏覽器本機執行（Blockly產生的JS本來就只能跑在瀏覽器裡），
+  // 正確答案也一律直接讀課程JS檔案裡的testCases比對，不分課程mode、不打任何後端。
   const runs = [];
   // requiresGreenFlag課程比照官方平台規範，評分只認「說出」積木的內容，
   // 「輸出」積木純粹是給學生看的顯示訊息，不計入比對（見executeGeneratedCode）。
@@ -1944,50 +1812,19 @@ async function runProgrammingTestCases() {
     runs.push({ testCase, result, actualOutput });
   }
 
-  const isContestMode = normalizeCourseMode(currentCourseMode) === 'contest';
+  const results = runs.map(({ testCase, result, actualOutput }) => {
+    const expectedOutput = testCase.expectedOutput;
+    const passed =
+      result.ok &&
+      normalizeOutputForCompare(actualOutput) === normalizeOutputForCompare(expectedOutput);
 
-  let results;
-
-  if (isContestMode) {
-    // contest模式課程的本機JS已經不含expectedOutput，正確答案只存在score-grader
-    // Worker那一側，必須送去給Worker比對，本機無從得知答案。
-    let graded;
-
-    try {
-      graded = await requestServerGrading(
-        currentCourseGroup.id,
-        currentTask.id,
-        runs.map(({ testCase, actualOutput }) => ({ caseId: testCase.id, actualOutput })),
-      );
-    } catch (error) {
-      writeOutput('');
-      writeOutput(`評分伺服器連線失敗，請稍後再試：${error.message}`);
-      return { total: 0, passed: 0, score: 0, allPassed: false, cases: [] };
-    }
-
-    const passedByCaseId = new Map(graded.results.map((item) => [item.caseId, item.passed]));
-
-    results = runs.map(({ testCase, result, actualOutput }) => ({
+    return {
       ...testCase,
       actualOutput,
-      passed: Boolean(result.ok && passedByCaseId.get(testCase.id)),
+      passed,
       errorMessage: result.error ? result.error.message : '',
-    }));
-  } else {
-    results = runs.map(({ testCase, result, actualOutput }) => {
-      const expectedOutput = testCase.expectedOutput;
-      const passed =
-        result.ok &&
-        normalizeOutputForCompare(actualOutput) === normalizeOutputForCompare(expectedOutput);
-
-      return {
-        ...testCase,
-        actualOutput,
-        passed,
-        errorMessage: result.error ? result.error.message : '',
-      };
-    });
-  }
+    };
+  });
 
   const passedCount = results.filter((item) => item.passed).length;
   const totalCount = results.length;
@@ -1997,8 +1834,6 @@ async function runProgrammingTestCases() {
     courseTitle: currentCourseGroup.title,
     taskId: currentTask.id,
     taskTitle: currentTask.problemTitle || currentTask.title,
-    mode: normalizeCourseMode(currentCourseMode),
-    modeText: getModeText(),
     requiresGreenFlag: useSayOutputOnly,
     total: totalCount,
     passed: passedCount,
@@ -2023,187 +1858,13 @@ async function testTask() {
     lastAssessmentResult = assessment;
 
     hasProgrammingAssessmentResult = assessment.total > 0;
-
-    updateSubmitScoreVisibility();
     return;
   }
 
   outputArea.textContent = 'SmartRing 課程不進行系統評分，請使用「執行程式」觀察硬體互動結果。';
   hasProgrammingAssessmentResult = false;
   lastAssessmentResult = null;
-  updateSubmitScoreVisibility();
 }
-
-// 2026-08-09比照BlocklyYdws移植：改成送原始測資給Worker重新計算分數，不信任前端算出來的
-// 數字；profile/localPreview分開放，跟main.js其餘讀取路徑（renderScoreUploadResult）對應。
-function buildScoreSubmissionPayload(profile) {
-  return {
-    courseId: currentCourseGroup?.id || '',
-    courseTitle: currentCourseGroup?.title || '',
-    taskId: currentTask?.id || '',
-    taskTitle: currentTask?.problemTitle || currentTask?.title || '',
-    mode: normalizeCourseMode(currentCourseMode),
-    profile: {
-      className: profile.className,
-      seatNumber: profile.seatNumber,
-      studentName: profile.name,
-      studentKey: getStudentKey(profile),
-    },
-    // 送給Worker重新驗證用的原始資料：每筆測資的實際輸出，不含分數/通過與否——
-    // 那些一律由Worker用自己的答案重新算，不信任前端算出來的數字。
-    cases: (lastAssessmentResult?.cases || []).map((item) => ({
-      caseId: item.id,
-      actualOutput: item.actualOutput,
-    })),
-    // 僅供送出前的本機預覽顯示，不是實際寫入Sheet的依據。
-    localPreview: {
-      score: lastAssessmentResult?.score ?? 0,
-      passed: lastAssessmentResult?.passed ?? 0,
-      total: lastAssessmentResult?.total ?? 0,
-      allPassed: Boolean(lastAssessmentResult?.allPassed),
-    },
-  };
-}
-
-function isScoreUploadConfigured() {
-  const url = String(SCORE_GRADER_WORKER_URL || '').trim();
-  return Boolean(url && !url.includes('請貼上') && !url.includes('YOUR_'));
-}
-
-async function uploadScorePayload(payload) {
-  const url = String(SCORE_GRADER_WORKER_URL || '').trim();
-
-  if (!isScoreUploadConfigured()) {
-    throw new Error('尚未設定成績評分後端網址。請先部署 workers/score-grader，並將 Worker 網址填入 src/main.js 的 SCORE_GRADER_WORKER_URL。');
-  }
-
-  const resp = await fetch(`${url}/submit-score`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  const body = await resp.json().catch(() => ({}));
-
-  if (!resp.ok || !body.ok) {
-    throw new Error(body.error || `成績上傳失敗（狀態碼 ${resp.status}）`);
-  }
-
-  return {
-    ok: true,
-    result: body,
-    message: `伺服器已確認分數 ${body.score} 分（${body.passed}/${body.total}），已寫入 Google Sheet。`,
-  };
-}
-
-function renderScoreUploadResult(payload, { status = 'preview', message = '' } = {}) {
-  const statusTitle = {
-    preview: '成績上傳資料預覽',
-    sending: '成績上傳中',
-    success: '成績上傳請求已送出',
-    error: '成績上傳失敗',
-  }[status] || '成績上傳資料';
-
-  const statusClass = status === 'success' ? 'passed' : status === 'error' ? 'failed' : '';
-  const preview = payload.localPreview || {};
-  const rows = [
-    ['班級', payload.profile?.className],
-    ['座號', payload.profile?.seatNumber],
-    ['姓名', payload.profile?.studentName],
-    ['學生識別', payload.profile?.studentKey],
-    ['課程組', `${payload.courseId}｜${payload.courseTitle}`],
-    ['子任務', `${payload.taskId}｜${payload.taskTitle}`],
-    ['本機預覽分數', `${preview.score}`],
-    ['本機測資', `${preview.passed} / ${preview.total}`],
-    ['通過狀態', preview.allPassed ? '全部通過' : '尚未全部通過'],
-  ]
-    .map(([label, value]) => `
-      <tr>
-        <th>${escapeHtml(label)}</th>
-        <td>${escapeHtml(value)}</td>
-      </tr>
-    `)
-    .join('');
-
-  const noteHtml = message
-    ? `<p class="assessment-note ${statusClass}">${escapeHtml(message)}</p>`
-    : '';
-
-  return `
-    <article class="score-upload-preview">
-      <h2>${statusTitle}</h2>
-      ${noteHtml}
-      <table class="score-upload-table">
-        <tbody>${rows}</tbody>
-      </table>
-    </article>
-  `;
-}
-
-async function submitScore() {
-  if (!SCORE_SUBMISSION_ENABLED) return;
-
-  const profile = getStudentProfile();
-
-  if (!isProgrammingProblemTask(currentTask, currentCourseGroup)) {
-    outputArea.textContent = '目前課程不是程式解題任務，不支援成績上傳。';
-    return;
-  }
-
-  const profileStatus = getStudentProfileCompleteness(profile);
-
-  if (!profileStatus.ok) {
-    markStudentProfileFields(profileStatus.missingFields);
-    outputArea.textContent =
-      `上傳成績前，請先填寫：${profileStatus.missingFields.join('、')}。`;
-    updateSubmitScoreVisibility();
-    return;
-  }
-
-  saveStudentProfileToStorage();
-  markStudentProfileFields([]);
-
-  if (!currentTask) {
-    outputArea.textContent = '請先載入課程組與子任務後再上傳成績。';
-    return;
-  }
-
-  if (!hasProgrammingAssessmentResult || !lastAssessmentResult || lastAssessmentResult.total <= 0) {
-    outputArea.textContent = '請先按「系統評分」並產生有效評分結果後，再上傳成績。';
-    updateSubmitScoreVisibility();
-    return;
-  }
-
-  if (hasLoadedStarterForCurrentTask) {
-    outputArea.textContent = '本題已載入範例積木，不能上傳成績。請按「清除工作區」清空積木後，自行重新建置積木並完成系統評分，再上傳成績。';
-    updateSubmitScoreVisibility();
-    return;
-  }
-
-  const payload = buildScoreSubmissionPayload(profile);
-
-  btnSubmitScore.disabled = true;
-  outputArea.innerHTML = renderScoreUploadResult(payload, {
-    status: 'sending',
-    message: '正在送出成績資料，請稍候。',
-  });
-
-  try {
-    const result = await uploadScorePayload(payload);
-    outputArea.innerHTML = renderScoreUploadResult(payload, {
-      status: 'success',
-      message: result.message,
-    });
-  } catch (error) {
-    outputArea.innerHTML = renderScoreUploadResult(payload, {
-      status: 'error',
-      message: error.message || '成績上傳時發生未知錯誤。',
-    });
-  } finally {
-    updateSubmitScoreVisibility();
-  }
-}
-
 
 function getCourseHealthText(inspection) {
   const messages = inspection?.messages || [];
@@ -2475,7 +2136,6 @@ function bindEvents() {
   btnOpenCourseManager?.addEventListener('click', openCourseManager);
   taskSelector.addEventListener('change', changeTask);
   btnTestTask.addEventListener('click', testTask);
-  btnSubmitScore.addEventListener('click', submitScore);
 
   btnToggleSmartRingPanel?.addEventListener('click', toggleSmartRingPanel);
   btnToggleTaskPanel?.addEventListener('click', toggleTaskPanel);
