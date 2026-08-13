@@ -58,6 +58,8 @@
 
 5. 成功後回到 Settings → Pages，會顯示「Your site is live at ...」，網址格式是 `https://你的帳號.github.io/你的repo名稱/`（例如 `https://tnjbox.github.io/Blockly-Start/`），點進去確認能正常打開。
 
+> **這個流程（含「第一次失敗、Re-run failed jobs 就會成功」）已經實際複製一份新 repo 走過一次確認可行**，不是紙上談兵的猜測步驟。
+
    > **之後每次你自己改程式碼、或用「課程管理」頁面匯入新課程，都不會再遇到這個問題**——只有複製範本後的第一次會這樣，因為只有那一次會搶在你設定 Pages 之前就自動觸發。
 
 ### 步驟 3：（選用）建立 GitHub Token，供「課程管理」頁面使用
