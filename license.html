@@ -138,6 +138,15 @@
         積木程式、程式解題與 SmartRingController 硬體互動的教學實驗平台。
       </p>
 
+      <div class="notice">
+        <p>
+          <strong>這是一份公開範本（Template repository）</strong>：
+          <code>github.com/tnjbox/Blockly-Start</code> 設計給其他縣市／學校的老師透過
+          GitHub 的「Use this template」功能複製到自己帳號下、建立屬於自己學校的獨立網站。
+          第 12 節「教師改作建議標示」特別是給複製這份範本的老師參考。
+        </p>
+      </div>
+
       <h2>2. 專案內容分類</h2>
 
       <p>本專案內容大致分為四類：</p>
@@ -163,8 +172,8 @@
         <li><code>src/style.css</code></li>
         <li><code>src/blockly/</code></li>
         <li><code>src/smartring/</code></li>
+        <li><code>src/courseManage.js</code>（線上匯入課程 JS 檔功能）</li>
         <li><code>tools/</code></li>
-        <li><code>google-apps-script/</code></li>
         <li><code>package.json</code></li>
         <li>Vite 設定檔</li>
         <li>其他平台運作所需程式碼</li>
@@ -296,19 +305,15 @@
             <td>GitHub 提供的網站代管服務</td>
           </tr>
           <tr>
-            <td>Google Apps Script</td>
-            <td>接收成績上傳</td>
-            <td>Google 提供的平台服務</td>
-          </tr>
-          <tr>
-            <td>Google Sheets</td>
-            <td>儲存學生成績</td>
-            <td>Google 提供的平台服務</td>
-          </tr>
-          <tr>
             <td>Web Serial API</td>
             <td>連接 SmartRingController</td>
             <td>瀏覽器提供的序列埠 API</td>
+          </tr>
+          <tr>
+            <td>GitHub API（Contents API）</td>
+            <td>「課程管理」頁面線上匯入課程 JS 檔，直接 commit 進使用者自己的 repo</td>
+            <td>使用者以自己的 GitHub 帳號與 Personal Access Token 呼叫，token 只存在
+              使用者自己瀏覽器的 localStorage，本專案不會經手或儲存</td>
           </tr>
         </tbody>
       </table>
@@ -316,6 +321,12 @@
       <p>
         這些服務或 API 不是本專案原始碼的一部分，也不是本專案重新授權的內容。
         使用者仍需遵守各平台或瀏覽器服務的使用條款。
+      </p>
+
+      <p>
+        本專案的範本版本（<code>Blockly-Start</code>）刻意不整合任何成績上傳後端
+        （不使用 Cloudflare Worker、Google Apps Script 或 Google Sheets）：介面上保留
+        「上傳成績」按鈕版位以維持版面一致，但按下不會有任何動作、不會呼叫任何後端服務。
       </p>
 
       <h2>8. 韌體檔案授權</h2>
@@ -355,7 +366,7 @@
       <p>
         本專案使用 Blockly 作為視覺化積木程式編輯器，使用 Vite
         作為前端開發與建置工具，使用 gh-pages 部署至 GitHub Pages，
-        並可能使用 Google Apps Script 與 Google Sheets 作為成績上傳與儲存工具。
+        並使用 GitHub API 提供線上匯入課程 JS 檔的功能。
       </p>
 
       <p>
@@ -370,16 +381,16 @@
       <p>
         Younger Yang / Younger Dream Workshop（2026）。Blockly Lab：Blockly x SmartRingController
         教學實驗平台。取自
-        <a href="https://github.com/tnjbox/blockly-lab" target="_blank" rel="noopener">
-          https://github.com/tnjbox/blockly-lab
+        <a href="https://github.com/tnjbox/Blockly-Start" target="_blank" rel="noopener">
+          https://github.com/tnjbox/Blockly-Start
         </a>
       </p>
 
       <p>
         若引用線上網站：Younger Yang / Younger Dream Workshop（2026）。Blockly Lab
         線上教學平台。取自
-        <a href="https://tnjbox.github.io/blockly-lab/" target="_blank" rel="noopener">
-          https://tnjbox.github.io/blockly-lab/
+        <a href="https://tnjbox.github.io/Blockly-Start/" target="_blank" rel="noopener">
+          https://tnjbox.github.io/Blockly-Start/
         </a>
       </p>
 
@@ -388,29 +399,39 @@
       <p>
         Younger Yang / Younger Dream Workshop. (2026). Blockly Lab: A Blockly x SmartRingController
         educational platform. Retrieved from
-        <a href="https://github.com/tnjbox/blockly-lab" target="_blank" rel="noopener">
-          https://github.com/tnjbox/blockly-lab
+        <a href="https://github.com/tnjbox/Blockly-Start" target="_blank" rel="noopener">
+          https://github.com/tnjbox/Blockly-Start
         </a>
       </p>
 
       <p>
         For the online website: Younger Yang / Younger Dream Workshop. (2026). Blockly Lab online
         platform. Retrieved from
-        <a href="https://tnjbox.github.io/blockly-lab/" target="_blank" rel="noopener">
-          https://tnjbox.github.io/blockly-lab/
+        <a href="https://tnjbox.github.io/Blockly-Start/" target="_blank" rel="noopener">
+          https://tnjbox.github.io/Blockly-Start/
         </a>
       </p>
 
-      <h2>12. 教師改作建議標示</h2>
+      <h2>12. 教師改作／複製範本建議標示</h2>
 
-      <p>若其他教師根據本專案改作自己的版本，建議標示：</p>
+      <p>
+        如果你是透過 GitHub「Use this template」複製了這份 <code>Blockly-Start</code> 範本網站，
+        平台程式碼（MIT License）可以自由修改、改名、加入自己學校的品牌與功能，不強制要求標示來源；
+        但如果保留了內建的 SmartRing 系列與 JSA00/JSB00 課程內容，這些課程文字屬於第 4 節說明的
+        CC BY-NC-SA 4.0 範圍，建議保留下方標示：
+      </p>
 
       <blockquote>
         本教材改作自 Younger Yang / Younger Dream Workshop 的 Blockly Lab 專案，原專案網址：
-        https://github.com/tnjbox/blockly-lab
+        https://github.com/tnjbox/Blockly-Start
       </blockquote>
 
-      <p>若有修改平台程式碼，建議保留：</p>
+      <p>
+        透過「課程管理」頁面（<code>manage.html</code>）自行匯入的新課程內容，屬於你自己學校
+        或老師的原創內容，不受本專案授權條款拘束，你可以自行決定授權方式。
+      </p>
+
+      <p>若有修改平台程式碼並想標示，建議保留：</p>
 
       <blockquote>
         Original project: Blockly Lab by Younger Yang / Younger Dream Workshop.<br />
