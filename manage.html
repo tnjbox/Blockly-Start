@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>課程管理：線上匯入課程 JS 檔</title>
+    <script type="module" crossorigin src="/Blockly-Start/assets/manage-CCT-RXBQ.js"></script>
+    <link rel="modulepreload" crossorigin href="/Blockly-Start/assets/courses-Bjwqn8L0.js">
+    <link rel="stylesheet" crossorigin href="/Blockly-Start/assets/manage-C8xHpenV.css">
+  </head>
+  <body>
+    <div id="manageApp" class="manage-app">
+      <header class="manage-header">
+        <h1>課程管理：線上匯入課程 JS 檔</h1>
+        <p>把新的課程 JS 檔匯入到你自己這一份網站——會直接透過 GitHub API commit 進你的 repo，
+          幾分鐘後 GitHub Pages 重新部署完成，網站上就會出現新課程。這一頁只有你自己（網站的
+          擁有者）看得到效果，不需要任何 Cloudflare 或 Google 帳號，只需要一組你自己 GitHub
+          帳號的存取權杖（token）。</p>
+      </header>
+
+      <section id="githubSection" class="manage-section">
+        <h2>1. 連接你的 GitHub Repo</h2>
+        <div class="manage-field-row">
+          <label class="manage-field">
+            <span>Repo 擁有者（帳號）</span>
+            <input id="repoOwner" type="text" placeholder="例如：your-github-name" />
+          </label>
+          <label class="manage-field">
+            <span>Repo 名稱</span>
+            <input id="repoName" type="text" placeholder="例如：blockly-lab" />
+          </label>
+          <label class="manage-field">
+            <span>分支</span>
+            <input id="repoBranch" type="text" value="main" />
+          </label>
+        </div>
+        <p class="manage-hint" id="repoAutoDetectHint"></p>
+
+        <label class="manage-field">
+          <span>GitHub Personal Access Token（Fine-grained，僅需這個 repo 的 Contents 讀寫權限）</span>
+          <input id="githubToken" type="password" placeholder="ghp_ 或 github_pat_ 開頭" />
+        </label>
+        <div class="manage-actions">
+          <button id="btnSaveGithubConfig" type="button" class="primary">儲存設定（存在這台瀏覽器）</button>
+          <button id="btnTestGithubConfig" type="button">測試連線</button>
+        </div>
+        <span id="githubConfigStatus" class="manage-status"></span>
+
+        <details class="manage-help">
+          <summary>沒有 Token？怎麼建立一個？</summary>
+          <ol>
+            <li>登入 GitHub，前往
+              <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">
+                Settings → Developer settings → Personal access tokens → Fine-grained tokens
+              </a>。
+            </li>
+            <li>Repository access 選「Only select repositories」，勾選你複製出來的這個repo。</li>
+            <li>Permissions 底下的 <code>Contents</code> 設為 <strong>Read and write</strong>，其他保持預設即可。</li>
+            <li>建立後把 token 貼到上面欄位——這個 token 只會存在你自己這台瀏覽器的
+              localStorage，不會送到我們（或任何第三方）手上。</li>
+          </ol>
+        </details>
+      </section>
+
+      <section id="importSection" class="manage-section">
+        <h2>2. 匯入課程 JS 檔</h2>
+        <label class="manage-field">
+          <span>選擇課程 JS 檔案</span>
+          <input id="courseFileInput" type="file" accept=".js,text/javascript" />
+        </label>
+        <p class="manage-hint">或直接貼上內容：</p>
+        <textarea id="courseTextInput" class="manage-textarea" spellcheck="false"
+          placeholder="const course = { code: '...', title: '...', tasks: [...] };&#10;export default course;"></textarea>
+
+        <div class="manage-actions">
+          <button id="btnValidateCourse" type="button" class="primary">驗證課程內容</button>
+        </div>
+
+        <div id="validationResult" class="manage-validation" hidden></div>
+
+        <div class="manage-actions">
+          <button id="btnImportCourse" type="button" class="primary" disabled>匯入到我的網站</button>
+        </div>
+        <div id="importResult" class="manage-status-block"></div>
+      </section>
+    </div>
+
+  </body>
+</html>
