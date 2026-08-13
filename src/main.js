@@ -160,6 +160,9 @@ const taskSelector = document.getElementById('taskSelector');
 const btnLoadCourse = document.getElementById('btnLoadCourse');
 const btnOpenCourseManager = document.getElementById('btnOpenCourseManager');
 const btnTestTask = document.getElementById('btnTestTask');
+// 2026-08-13使用者決定：範本網站保留「上傳成績」按鈕的版位（避免這一列按鈕要重新排版），
+// 但這個範本本來就沒有成績上傳後端，按下去刻意不做任何事。
+const btnSubmitScore = document.getElementById('btnSubmitScore');
 
 const taskInfo = document.getElementById('taskInfo');
 const sidePanel = document.querySelector('.side-panel');
@@ -2136,6 +2139,7 @@ function bindEvents() {
   btnOpenCourseManager?.addEventListener('click', openCourseManager);
   taskSelector.addEventListener('change', changeTask);
   btnTestTask.addEventListener('click', testTask);
+  btnSubmitScore?.addEventListener('click', () => {});
 
   btnToggleSmartRingPanel?.addEventListener('click', toggleSmartRingPanel);
   btnToggleTaskPanel?.addEventListener('click', toggleTaskPanel);

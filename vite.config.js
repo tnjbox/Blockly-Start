@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: '/blockly-lab/',
+  base: '/Blockly-Start/',
   build: {
     rollupOptions: {
       input: {
