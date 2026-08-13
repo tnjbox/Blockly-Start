@@ -43,15 +43,19 @@
 
 ### 步驟 2：開啟 GitHub Pages，讓網站真的上線
 
+這份範本內建 GitHub Actions 自動部署（`.github/workflows/deploy.yml`）：只要 repo 裡有程式碼，
+每次 push 到 `main` 分支都會自動重新建置、自動部署，**不需要任何人在自己電腦上跑 `npm install`
+或 `npm run build`**。你唯一要做的是切換一次「Source」設定：
+
 1. 到你剛複製出來的 repo，點上方的 **Settings** → 左邊選單的 **Pages**。
-2. **Source** 選「Deploy from a branch」。
-3. **Branch** 這裡要選 `gh-pages`、資料夾選 `/(root)`，按 **Save**。
+2. **Source** 選「**GitHub Actions**」（不是「Deploy from a branch」）。
 
-   ![GitHub Pages 設定畫面，Source 選 Deploy from a branch，Branch 選 gh-pages](docs/copy-guide-images/04-pages-settings.jpg)
+   ![GitHub Pages 設定畫面，Source 選 GitHub Actions，底下顯示已透過 Deploy to GitHub Pages workflow 部署完成](docs/copy-guide-images/04-pages-settings.jpg)
 
-   > **如果下拉選單裡沒有 `gh-pages` 這個分支**：代表網站程式碼還沒有部署過一次。這種情況需要有人在自己電腦上跑過 `npm install && npm run build && npx gh-pages -d dist`（需要 Node.js 環境），`gh-pages` 分支才會被建立出來。如果你不會寫程式、身邊也沒有工程背景的人可以幫忙，可以直接聯絡 Younger Dream Workshop 協助部署第一次。
+3. 這個設定一存檔，Actions 通常已經在背景自動跑過一次了（複製 repo 那個當下的 commit 就會觸發）。到上方 **Actions** 分頁可以看到「Deploy to GitHub Pages」的執行紀錄，綠色勾勾代表成功；第一次執行大約需要 1～2 分鐘（要安裝套件+建置）。
+4. 成功後回到 Settings → Pages，會顯示「Your site is live at ...」，網址格式是 `https://你的帳號.github.io/你的repo名稱/`（例如 `https://tnjbox.github.io/Blockly-Start/`），點進去確認能正常打開。
 
-4. 存檔後通常 1～3 分鐘網站就會上線，網址格式是 `https://你的帳號.github.io/你的repo名稱/`（例如 `https://tnjbox.github.io/Blockly-Start/`）。這個頁面上方會顯示「Your site is live at ...」，點進去確認能正常打開。
+   > **如果 Actions 分頁顯示執行失敗（紅色 X）**：點進去看錯誤訊息，最常見是 npm 套件安裝逾時，重新整理頁面按右上角 **Re-run all jobs** 通常就會過。如果不確定怎麼排查，可以直接聯絡 Younger Dream Workshop 協助。
 
 ### 步驟 3：（選用）建立 GitHub Token，供「課程管理」頁面使用
 
@@ -91,7 +95,7 @@
 ## 常見問題
 
 **Q：GitHub Pages開了但網站還是打不開？**
-通常是還在部署中，等 2～3 分鐘再重整一次。如果超過 10 分鐘還是不行，回到 Settings → Pages 確認 Branch 是不是選 `gh-pages`。
+通常是還在部署中，等 2～3 分鐘再重整一次（記得強制重新整理／清瀏覽器快取，不然可能還是看到舊版畫面）。如果超過 10 分鐘還是不行，回到 Settings → Pages 確認 Source 是不是選「GitHub Actions」，並到 **Actions** 分頁確認「Deploy to GitHub Pages」有沒有執行失敗。
 
 **Q：manage.html「測試連線」失敗？**
 先確認 Token 有沒有過期，再確認建立 Token 時 **Repository access** 有沒有選對這個 repo、**Contents** 權限是不是設成「Read and write」（不是預設的「No access」）。
